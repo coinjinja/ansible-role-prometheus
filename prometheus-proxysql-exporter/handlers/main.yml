@@ -1,0 +1,6 @@
+---
+- name: restart proxysql exporter
+  service:
+    name: prometheus-proxysql-exporter
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,46 @@
+---
+- name: check prometheus elasticsearch exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_elasticsearch_exporter_release_name }}/elasticsearch_exporter"
+  register: installed_path
+
+- name: download prometheus elasticsearch exporter binary
+  get_url:
+    url: "{{ prometheus_elasticsearch_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_elasticsearch_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_elasticsearch_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_elasticsearch_exporter_release_name }}/elasticsearch_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_elasticsearch_exporter_release_name }}/elasticsearch_exporter"
+    path: "/usr/local/bin/elasticsearch_exporter"
+    state: link
+  notify:
+    - restart elasticsearch exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-elasticsearch-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-elasticsearch-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart elasticsearch exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus elasticsearch exporter service is enabled and started
+  service:
+    name: prometheus-elasticsearch-exporter
+    state: started
+    enabled: yes

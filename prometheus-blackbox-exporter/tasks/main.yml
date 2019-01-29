@@ -1,0 +1,55 @@
+---
+- name: check prometheus blackbox exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_blackbox_exporter_release_name }}/blackbox_exporter"
+  register: installed_path
+
+- name: download prometheus blackbox exporter binary
+  get_url:
+    url: "{{ prometheus_blackbox_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_blackbox_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_blackbox_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_blackbox_exporter_release_name }}/blackbox_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_blackbox_exporter_release_name }}/blackbox_exporter"
+    path: "/usr/local/bin/blackbox_exporter"
+    state: link
+  notify:
+    - restart blackbox exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-blackbox-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-blackbox-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart blackbox exporter
+
+- name: copy blackbox config
+  template:
+    src: blackbox.yml.j2
+    dest: /etc/prometheus/blackbox.yml
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  notify:
+    - restart blackbox exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus blackbox exporter service is enabled and started
+  service:
+    name: prometheus-blackbox-exporter
+    state: started
+    enabled: yes

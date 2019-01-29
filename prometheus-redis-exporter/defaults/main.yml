@@ -1,0 +1,5 @@
+---
+prometheus_redis_exporter_version: 0.23.0
+prometheus_redis_exporter_release_name: "redis_exporter-v{{ prometheus_redis_exporter_version }}.linux-amd64"
+prometheus_redis_exporter_download_url: "https://github.com/oliver006/redis_exporter/releases/download/v{{ prometheus_redis_exporter_version }}/{{ prometheus_redis_exporter_release_name }}.tar.gz"
+prometheus_redis_exporter_config_flags: {}

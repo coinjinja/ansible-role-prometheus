@@ -1,0 +1,5 @@
+---
+prometheus_pgpool2_exporter_version: 1.2.0
+prometheus_pgpool2_exporter_release_name: "pgpool2-exporter-{{ prometheus_pgpool2_exporter_version }}.linux-amd64"
+prometheus_pgpool2_exporter_download_url: "https://github.com/leominov/pgpool2-exporter/releases/download/v{{ prometheus_pgpool2_exporter_version }}/{{ prometheus_pgpool2_exporter_release_name }}.tar.gz"
+prometheus_pgpool2_exporter_config_flags: {}

@@ -1,0 +1,10 @@
+---
+prometheus_version: 2.5.0
+prometheus_release_name: "prometheus-{{ prometheus_version }}.linux-amd64"
+prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/{{ prometheus_release_name }}.tar.gz"
+prometheus_config_flags: {}
+
+prometheus_alertmanager_version: 0.15.3
+prometheus_alertmanager_release_name: "alertmanager-{{ prometheus_alertmanager_version }}.linux-amd64"
+prometheus_alertmanager_download_url: "https://github.com/prometheus/alertmanager/releases/download/v{{ prometheus_alertmanager_version }}/{{ prometheus_alertmanager_release_name }}.tar.gz"
+prometheus_alertmanager_config_flags: {}

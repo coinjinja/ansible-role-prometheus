@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus Pgpool2 Exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+ExecStart=/usr/local/bin/pgpool2-exporter {% for flag, flag_value in prometheus_pgpool2_exporter_config_flags.items() %}--{{ flag }}={{ flag_value }} {% endfor %}
+
+SyslogIdentifier=prometheus_pgpool2_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,59 @@
+---
+- name: check prometheus alertmanager installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_alertmanager_release_name }}/alertmanager"
+  register: installed_path
+
+- name: download prometheus alertmanager binary
+  get_url:
+    url: "{{ prometheus_alertmanager_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_alertmanager_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_alertmanager_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_alertmanager_release_name }}/alertmanager"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_alertmanager_release_name }}/{{ item }}"
+    path: "/usr/local/bin/{{ item }}"
+    state: link
+  with_items:
+    - alertmanager
+    - amtool
+  notify:
+    - restart prometheus-alertmanager
+
+- name: create systemd service unit
+  template:
+    src: prometheus-alertmanager.service.j2
+    dest: /etc/systemd/system/prometheus-alertmanager.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart prometheus-alertmanager
+
+- meta: flush_handlers
+
+- name: alertmanager config
+  copy:
+    src: "{{ alertmanager_config_path }}"
+    dest: /etc/prometheus/alertmanager.yml
+    validate: /usr/local/bin/amtool check-config %s
+  notify:
+    - restart prometheus-alertmanager
+
+- name: start prometheus-alertmanager
+  systemd:
+    name: prometheus-alertmanager.service
+    daemon_reload: yes
+    enabled: yes
+    state: started
+

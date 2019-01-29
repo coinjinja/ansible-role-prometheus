@@ -1,0 +1,46 @@
+---
+- name: check prometheus haproxy exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_haproxy_exporter_release_name }}/haproxy_exporter"
+  register: installed_path
+
+- name: download prometheus haproxy exporter binary
+  get_url:
+    url: "{{ prometheus_haproxy_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_haproxy_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_haproxy_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_haproxy_exporter_release_name }}/haproxy_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_haproxy_exporter_release_name }}/haproxy_exporter"
+    path: "/usr/local/bin/haproxy_exporter"
+    state: link
+  notify:
+    - restart haproxy exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-haproxy-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-haproxy-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart haproxy exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus haproxy exporter service is enabled and started
+  service:
+    name: prometheus-haproxy-exporter
+    state: started
+    enabled: yes

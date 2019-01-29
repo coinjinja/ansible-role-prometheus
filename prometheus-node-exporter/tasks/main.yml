@@ -1,0 +1,46 @@
+---
+- name: check prometheus node exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_node_exporter_release_name }}/node_exporter"
+  register: installed_path
+
+- name: download prometheus node exporter binary
+  get_url:
+    url: "{{ prometheus_node_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_node_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_node_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_node_exporter_release_name }}/node_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_node_exporter_release_name }}/node_exporter"
+    path: "/usr/local/bin/node_exporter"
+    state: link
+  notify:
+    - restart node exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-node-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-node-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart node exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus node exporter service is enabled and started
+  service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

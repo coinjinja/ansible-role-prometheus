@@ -1,0 +1,46 @@
+---
+- name: check prometheus pgpool2 exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_pgpool2_exporter_release_name }}/pgpool2-exporter"
+  register: installed_path
+
+- name: download prometheus pgpool2 exporter binary
+  get_url:
+    url: "{{ prometheus_pgpool2_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_pgpool2_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_pgpool2_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_pgpool2_exporter_release_name }}/pgpool2-exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_pgpool2_exporter_release_name }}/pgpool2-exporter"
+    path: "/usr/local/bin/pgpool2-exporter"
+    state: link
+  notify:
+    - restart pgpool2 exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-pgpool2-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-pgpool2-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart pgpool2 exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus pgpool2 exporter service is enabled and started
+  service:
+    name: prometheus-pgpool2-exporter
+    state: started
+    enabled: yes

@@ -1,0 +1,17 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: humiaozuzu
+  description: Prometheus Server and Exporter
+  company: "Coinjinja"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 1.8
+  role_name: coinjinja.prometheus
+  platforms:
+    - name: Ubuntu
+      versions:
+      - trusty
+      - xenial
+  galaxy_tags:
+    - moosefs

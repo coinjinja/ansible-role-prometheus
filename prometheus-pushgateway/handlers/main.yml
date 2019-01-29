@@ -1,0 +1,6 @@
+---
+- name: restart pushgateway
+  service:
+    name: prometheus-pushgateway
+    state: restarted
+    daemon_reload: yes

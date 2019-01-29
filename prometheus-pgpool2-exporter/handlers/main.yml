@@ -1,0 +1,6 @@
+---
+- name: restart pgpool2 exporter
+  service:
+    name: prometheus-pgpool2-exporter
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus Blackbox Exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+ExecStart=/usr/local/bin/blackbox_exporter --config.file=/etc/prometheus/blackbox.yml
+
+SyslogIdentifier=prometheus_blackbox_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

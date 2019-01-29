@@ -1,0 +1,38 @@
+---
+- name: install needed packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - curl
+    - tar
+    - bzip2
+    - ca-certificates
+    - ssl-cert
+
+- name: create group
+  group:
+    name: prometheus
+    system: yes
+    state: present
+
+- name: create user
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    system: yes
+    shell: "/sbin/nologin"
+    groups: "ssl-cert"
+    createhome: no
+    state: present
+
+- name: create prometheus directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0755
+  with_items:
+    - "{{ prometheus_root_dir }}"
+    - "{{ prometheus_conf_dir }}"

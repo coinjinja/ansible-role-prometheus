@@ -1,0 +1,80 @@
+---
+- name: check prometheus installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_release_name }}/prometheus"
+  register: installed_path
+
+- name: download prometheus binary
+  get_url:
+    url: "{{ prometheus_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_release_name }}/prometheus"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_release_name }}/{{ item }}"
+    path: "/usr/local/bin/{{ item }}"
+    state: link
+  with_items:
+    - prometheus
+    - promtool
+  notify:
+    - restart prometheus
+
+- name: create systemd service unit
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart prometheus
+
+- meta: flush_handlers
+
+- name: prometheus file_sd
+  copy:
+    src: "{{ prometheus_file_sd_path }}"
+    dest: /etc/prometheus/file_sd/
+  notify:
+    - reload prometheus
+
+- name: prometheus config
+  copy:
+    src: "{{ prometheus_config_path }}"
+    dest: /etc/prometheus/prometheus.yml
+    validate: /usr/local/bin/promtool check config %s
+  when: prometheus_config_path is defined
+  notify:
+    - reload prometheus
+
+- meta: flush_handlers
+
+- name: prometheus rules
+  copy:
+    src: "{{ prometheus_rules_path }}"
+    dest: /etc/prometheus/rules/
+    validate: /usr/local/bin/promtool check rules %s
+  when: prometheus_rules_path is defined
+  notify:
+    - reload prometheus
+
+- meta: flush_handlers
+
+- name: start prometheus
+  systemd:
+    name: prometheus.service
+    daemon_reload: yes
+    enabled: yes
+    state: started
+

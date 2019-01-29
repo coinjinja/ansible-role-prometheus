@@ -1,0 +1,5 @@
+---
+prometheus_pushgateway_version: 0.6.0
+prometheus_pushgateway_release_name: "pushgateway-{{ prometheus_pushgateway_version }}.linux-amd64"
+prometheus_pushgateway_download_url: "https://github.com/prometheus/pushgateway/releases/download/v{{ prometheus_pushgateway_version }}/{{ prometheus_pushgateway_release_name }}.tar.gz"
+prometheus_pushgateway_config_flags: {}

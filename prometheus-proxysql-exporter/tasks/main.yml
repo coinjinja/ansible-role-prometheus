@@ -1,0 +1,46 @@
+---
+- name: check prometheus proxysql exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_proxysql_exporter_release_name }}/proxysql_exporter"
+  register: installed_path
+
+- name: download prometheus proxysql exporter binary
+  get_url:
+    url: "{{ prometheus_proxysql_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_proxysql_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_proxysql_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_proxysql_exporter_release_name }}/proxysql_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_proxysql_exporter_release_name }}/proxysql_exporter"
+    path: "/usr/local/bin/proxysql_exporter"
+    state: link
+  notify:
+    - restart proxysql exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-proxysql-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-proxysql-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart proxysql exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus proxysql exporter service is enabled and started
+  service:
+    name: prometheus-proxysql-exporter
+    state: started
+    enabled: yes

@@ -1,0 +1,21 @@
+---
+- name: restart prometheus-alertmanager
+  systemd:
+    name: prometheus-alertmanager.service
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+
+- name: restart prometheus
+  systemd:
+    name: prometheus.service
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+
+- name: reload prometheus
+  systemd:
+    name: prometheus.service
+    daemon_reload: yes
+    enabled: yes
+    state: reloaded

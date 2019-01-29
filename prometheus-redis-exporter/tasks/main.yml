@@ -1,0 +1,55 @@
+---
+- name: check prometheus redis exporter installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}/redis_exporter"
+  register: installed_path
+
+- name: download prometheus redis exporter binary
+  get_url:
+    url: "{{ prometheus_redis_exporter_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: create prometheus redis exporter path
+  file:
+    path: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}"
+    state: directory
+    recurse: yes
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}/redis_exporter"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_redis_exporter_release_name }}/redis_exporter"
+    path: "/usr/local/bin/redis_exporter"
+    state: link
+  notify:
+    - restart redis exporter
+
+- name: create systemd service unit
+  template:
+    src: prometheus-redis-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-redis-exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart redis exporter
+
+- meta: flush_handlers
+
+- name: ensure prometheus redis exporter service is enabled and started
+  service:
+    name: prometheus-redis-exporter
+    state: started
+    enabled: yes

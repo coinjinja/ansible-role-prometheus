@@ -1,0 +1,46 @@
+---
+- name: check prometheus pushgateway installed
+  stat: path="{{ prometheus_root_dir }}/{{ prometheus_pushgateway_release_name }}/pushgateway"
+  register: installed_path
+
+- name: download prometheus pushgateway binary
+  get_url:
+    url: "{{ prometheus_pushgateway_download_url }}"
+    dest: "{{ prometheus_root_dir }}/{{ prometheus_pushgateway_release_name }}.tar.gz"
+  when: installed_path.stat.exists == false
+
+- name: unarchive binary tarball
+  unarchive:
+    copy: no
+    src: "{{ prometheus_root_dir }}/{{ prometheus_pushgateway_release_name }}.tar.gz"
+    dest: "{{ prometheus_root_dir }}"
+    creates: "{{ prometheus_root_dir }}/{{ prometheus_pushgateway_release_name }}/pushgateway"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  when: installed_path.stat.exists == false
+
+- name: create symlink to the current release
+  file:
+    src: "{{ prometheus_root_dir }}/{{ prometheus_pushgateway_release_name }}/pushgateway"
+    path: "/usr/local/bin/pushgateway"
+    state: link
+  notify:
+    - restart pushgateway
+
+- name: create systemd service unit
+  template:
+    src: prometheus-pushgateway.service.j2
+    dest: /etc/systemd/system/prometheus-pushgateway.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart pushgateway
+
+- meta: flush_handlers
+
+- name: ensure prometheus pushgateway service is enabled and started
+  service:
+    name: prometheus-pushgateway
+    state: started
+    enabled: yes

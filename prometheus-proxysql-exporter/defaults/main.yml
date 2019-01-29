@@ -1,0 +1,5 @@
+---
+prometheus_proxysql_exporter_version: 1.1.0
+prometheus_proxysql_exporter_release_name: "proxysql_exporter-{{ prometheus_proxysql_exporter_version }}.linux-amd64"
+prometheus_proxysql_exporter_download_url: "https://github.com/percona/proxysql_exporter/releases/download/v{{ prometheus_proxysql_exporter_version }}/{{ prometheus_proxysql_exporter_release_name }}.tar.gz"
+prometheus_proxysql_exporter_config_flags: {}

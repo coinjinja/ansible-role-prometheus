@@ -1,14 +1,13 @@
 ---
 - name: install needed packages
-  package:
-    name: "{{ item }}"
+  apt:
     state: present
-  with_items:
-    - curl
-    - tar
-    - bzip2
-    - ca-certificates
-    - ssl-cert
+    pkg:
+      - curl
+      - tar
+      - bzip2
+      - ca-certificates
+      - ssl-cert
 
 - name: create group
   group:

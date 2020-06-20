@@ -46,6 +46,7 @@
   copy:
     src: "{{ prometheus_file_sd_path }}"
     dest: /etc/prometheus/file_sd/
+  when: prometheus_file_sd_path is defined
   notify:
     - reload prometheus
 

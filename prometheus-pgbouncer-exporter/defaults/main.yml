@@ -1,5 +1,5 @@
 ---
-prometheus_pgbouncer_exporter_version: 0.0.4
+prometheus_pgbouncer_exporter_version: 0.3.0
 prometheus_pgbouncer_exporter_release_name: "pgbouncer_exporter-{{ prometheus_pgbouncer_exporter_version }}-gitlab.linux-amd64"
 prometheus_pgbouncer_exporter_download_url: "https://github.com/stanhu/pgbouncer_exporter/releases/download/v{{ prometheus_pgbouncer_exporter_version }}-gitlab/{{ prometheus_pgbouncer_exporter_release_name }}.tar.gz"
 prometheus_pgbouncer_exporter_config_flags: {}
